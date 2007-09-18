@@ -1,0 +1,28 @@
+.PHONY: makelib testlib install clean
+
+.SUBDIRS: tests
+
+FILES = mlzlib
+LIB = mlzlib
+
+section
+   INCLUDES += $(shell $(OCAMLC) -where)
+   mlzlib_stub$(EXT_OBJ):
+
+section
+   CCLIB = $(StaticCLibrary libmlzlib_stub, mlzlib_stub)
+   OCAML_LIB_FLAGS += -cclib -lz -cclib -lmlzlib_stub
+   OCAMLLIBS = $(OCamlLibrary $(LIB), $(FILES))
+   $(OCAMLLIBS): $(CCLIB)
+   .DEFAULT: $(LIB)$(EXT_LIB)
+
+open ../../config
+
+IFILES =
+
+LibInstall(makelib, $(LIB), $(IFILES))
+
+install: makelib
+
+clean:
+   $(CLEAN)

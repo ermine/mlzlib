@@ -1,0 +1,19 @@
+.PHONY: testlib clean
+
+OCAMLINCLUDES += ..
+
+FILES = zpipe
+PROGRAM = zpipe
+
+OCAML_OTHER_LIBS += unix mlzlib
+#OCAML_LIBS = mlzlib
+
+# .DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES))
+OCamlProgram($(PROGRAM), $(FILES))
+
+testlib: $(PROGRAM)$(EXE)
+
+open ../../../config
+
+clean:
+   $(CLEAN) $(PROGRAM)$(EXE)

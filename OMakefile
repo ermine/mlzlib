@@ -9,8 +9,10 @@ section
    INCLUDES += $(shell $(OCAMLC) -where)
    mlzlib_stub$(EXT_OBJ):
 
+CLIBNAME = libmlzlib_stub
+
 section
-   CCLIB = $(StaticCLibrary libmlzlib_stub, mlzlib_stub)
+   CCLIB = $(StaticCLibrary $(CLIBNAME), mlzlib_stub)
    OCAML_LIB_FLAGS += -cclib -lz -cclib -lmlzlib_stub
    OCAMLLIBS = $(OCamlLibrary $(LIB), $(FILES))
    $(OCAMLLIBS): $(CCLIB)
@@ -18,9 +20,12 @@ section
 
 open ../../config
 
-IFILES =
+IFILES[] =
+   mlzlib
 
-LibInstall(makelib, $(LIB), $(IFILES))
+ALIBS[] = $(CLIBNAME)$(EXT_LIB)
+
+LibInstall(makelib, $(LIB), $(IFILES), $(ALIBS))
 
 install: makelib
 

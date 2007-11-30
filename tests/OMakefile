@@ -1,19 +1,20 @@
 .PHONY: testlib clean
 
-OCAMLINCLUDES += ..
-
-FILES = zpipe
-PROGRAM = zpipe
-
-OCAML_OTHER_LIBS += unix mlzlib
-#OCAML_LIBS = mlzlib
-
-# .DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES))
-OCamlProgram($(PROGRAM), $(FILES))
-
-testlib: $(PROGRAM)$(EXE)
-
 open ../../../config
 
+TESTS[] =
+   zpipe
+   gunzip_s
+
+OCAMLINCLUDES += ..
+
+foreach(name, $(TESTS))
+   OCAML_OTHER_LIBS += unix mlzlib
+   OCAML_LINK_FLAGS = -linkall
+   OCamlProgram($(name), $(name))
+   $(name)$(EXE): $(addsuffix .ml, $(name))
+
+testlib: $(TESTS)$(EXE)
+
 clean:
-   $(CLEAN) $(PROGRAM)$(EXE)
+   $(CLEAN) $(TESTS)$(EXE)

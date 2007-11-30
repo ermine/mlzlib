@@ -2,6 +2,8 @@
 
 .SUBDIRS: tests
 
+OCAMLFLAGS = -g
+
 FILES = mlzlib
 LIB = mlzlib
 

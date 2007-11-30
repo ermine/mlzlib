@@ -12,8 +12,6 @@
 
 #define Z_Val(v) ((z_stream *) (v))
 
-static value *mlzlib_error_exn = NULL;
-
 static int z_retcode_table[] = {
   Z_OK,
   Z_STREAM_END,
@@ -42,6 +40,15 @@ value z_retcode_of_code (int retcode) {
   return err;
 }
 
+static value *mlzlib_error_exn = NULL;
+
+CAMLprim value mlzlib_init(value unit) {
+  mlzlib_error_exn = caml_named_value("Mlzlib_Error");
+  if (mlzlib_error_exn == NULL)
+    invalid_argument("Exception Mlzlib_Error not initialized");
+  return Val_unit;
+}
+
 static void mlzlib_error(char *fn, int ret, char *msg) {
   value res;
   value s1 = Val_unit, s2 = Val_unit, s3 = Val_unit;
@@ -50,11 +57,6 @@ static void mlzlib_error(char *fn, int ret, char *msg) {
     msg = "";
 
   Begin_roots3(s1, s2, s3);
-    if (mlzlib_error_exn == NULL) {
-      mlzlib_error_exn = caml_named_value("Mlzlib.Error");
-      if (mlzlib_error_exn == NULL)
-	invalid_argument("Exception Mlzlib.Error not initialized");
-    }
     s1 = z_retcode_of_code(ret);
     s2 = copy_string(fn);
     s3 = copy_string(msg);
@@ -99,6 +101,14 @@ CAMLprim value mlzlib_deflateInit(value vlevel) {
 CAMLprim value mlzlib_inflateInit(value unit) {
   value vz = z_stream_new();
   int ret = inflateInit(Z_Val(vz));
+  if (ret != Z_OK)
+    mlzlib_error("inflateInit", ret, Z_Val(vz)->msg);
+  return vz;
+}
+
+CAMLprim value mlzlib_inflateInit2(value wbits) {
+  value vz = z_stream_new();
+  int ret = inflateInit2(Z_Val(vz), Int_val(wbits));
   if (ret != Z_OK)
     mlzlib_error("inflateInit", ret, Z_Val(vz)->msg);
   return vz;
@@ -209,9 +219,29 @@ CAMLprim value mlzlib_zlibVersion(value unit) {
   return ret;
 }
 
+CAMLprim value mlzlib_crc32(value vcrc, value vbuf, value vlen) {
+  unsigned long ret;
+  ret = crc32(Int32_val(vcrc), &Byte_u(vbuf, 0), Long_val(vlen));
+  return copy_int32(ret);
+}
+
 /*
 TODO
 const char * zError (int err);
 int inflateSyncPoint (z_streamp z);
 const uLongf * get_crc_table (void);
 */
+
+CAMLprim value mlzlib_uncompress(value vdest, value vdestlen, value vsrc,
+				 value vsrclen) {
+  int ret;
+  unsigned long destlen = Long_val(vdestlen);
+
+  ret = uncompress(String_val(vdest), &destlen,
+		   String_val(vsrc), Long_val(vsrclen));
+  if (ret != Z_OK) {
+    printf("real ret %d\n", ret);
+    mlzlib_error("uncompress", ret, "");
+  }
+  return Val_unit;
+}

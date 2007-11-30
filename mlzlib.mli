@@ -2,6 +2,8 @@
  * (c) 2006 Anastasia Gornostaeva <ermine@ermine.pp.ru>
  *)
 
+val max_wbits: int
+
 type z_retcode =
    | Z_OK
    | Z_STREAM_END
@@ -32,6 +34,9 @@ external zlib_deflateInit: z_level -> z_stream
 external zlib_inflateInit: unit -> z_stream
    = "mlzlib_inflateInit"
 
+external zlib_inflateInit2: int -> z_stream
+   = "mlzlib_inflateInit2"
+
 external zlib_deflateEnd: z_stream -> unit
    = "mlzlib_deflateEnd"
 
@@ -56,3 +61,9 @@ external zlib_deflate: z_stream -> z_flush ->
    string -> int -> int ->
    bool * int * int
    = "mlzlib_deflate_bc" "mlzlib_deflate_nc"
+
+external crc32: int32 -> string -> int -> int32
+   = "mlzlib_crc32"
+
+external uncompress : string -> int -> string -> int -> unit
+   = "mlzlib_uncompress"

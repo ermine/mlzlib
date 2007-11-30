@@ -1,6 +1,8 @@
 (*
- * (c) 2006 Anastasia Gornostaeva <ermine@ermine.pp.ru>
+ * (c) 2006-2007 Anastasia Gornostaeva <ermine@ermine.pp.ru>
  *)
+
+let max_wbits = 15
 
 type z_retcode =
    | Z_OK
@@ -15,8 +17,11 @@ type z_retcode =
 
 exception Error of z_retcode * string * string
 
+external init: unit -> unit = "mlzlib_init"
+
 let _ =
-  Callback.register_exception "Mlzlib.Error" (Error(Z_OK, "", ""))
+   Callback.register_exception "Mlzlib_Error" (Error (Z_OK, "", ""));
+   init ();
 
 external zlib_version: unit -> string
    = "mlzlib_zlibVersion"
@@ -37,6 +42,9 @@ external zlib_deflateEnd: z_stream -> unit
 
 external zlib_inflateInit: unit -> z_stream
    = "mlzlib_inflateInit"
+
+external zlib_inflateInit2: int -> z_stream
+   = "mlzlib_inflateInit2"
 
 external zlib_inflateEnd: z_stream -> unit
    = "mlzlib_inflateEnd"
@@ -59,3 +67,9 @@ external zlib_deflate: z_stream -> z_flush ->
    string -> int -> int ->
    bool * int * int
    = "mlzlib_deflate_bc" "mlzlib_deflate_nc"
+
+external crc32: int32 -> string -> int -> int32
+   = "mlzlib_crc32"
+
+external uncompress : string -> int -> string -> int -> unit
+   = "mlzlib_uncompress"

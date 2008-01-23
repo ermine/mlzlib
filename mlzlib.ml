@@ -1,5 +1,5 @@
 (*
- * (c) 2006-2007 Anastasia Gornostaeva <ermine@ermine.pp.ru>
+ * (c) 2006-2008 Anastasia Gornostaeva <ermine@ermine.pp.ru>
  *)
 
 let max_wbits = 15

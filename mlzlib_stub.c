@@ -7,6 +7,7 @@
 #include <caml/alloc.h>
 #include <caml/callback.h>
 #include <caml/fail.h>
+#include <caml/custom.h>
 
 #include <zlib.h>
 
@@ -24,7 +25,7 @@ static int z_retcode_table[] = {
   Z_VERSION_ERROR
 };
 
-value z_retcode_of_code (int retcode) {
+static value z_retcode_of_code (int retcode) {
   value err;
 
   int errconstr = cst_to_constr(retcode, 
@@ -43,33 +44,35 @@ value z_retcode_of_code (int retcode) {
 static value *mlzlib_error_exn = NULL;
 
 CAMLprim value mlzlib_init(value unit) {
+  CAMLparam0();
+  CAMLlocal1(vres);
+
   mlzlib_error_exn = caml_named_value("Mlzlib_Error");
   if (mlzlib_error_exn == NULL)
     invalid_argument("Exception Mlzlib_Error not initialized");
-  return Val_unit;
+  vres = Val_unit;
+
+  CAMLreturn(vres);
 }
 
 static void mlzlib_error(char *fn, int ret, char *msg) {
-  value res;
-  value s1 = Val_unit, s2 = Val_unit, s3 = Val_unit;
+  CAMLlocal4(s1, s2, s3, vres);
 
   if (msg == NULL)
     msg = "";
 
-  Begin_roots3(s1, s2, s3);
-    s1 = z_retcode_of_code(ret);
-    s2 = copy_string(fn);
-    s3 = copy_string(msg);
-    res = alloc_small(4, 0);
-    Field(res, 0) = *mlzlib_error_exn;
-    Field(res, 1) = s1;
-    Field(res, 2) = s2;
-    Field(res, 3) = s3;
-  End_roots();
-  mlraise(res);
+  s1 = z_retcode_of_code(ret);
+  s2 = copy_string(fn);
+  s3 = copy_string(msg);
+  vres = alloc_small(4, 0);
+  Store_field(vres, 0, *mlzlib_error_exn);
+  Store_field(vres, 1, s1);
+  Store_field(vres, 2, s2);
+  Store_field(vres, 3, s3);
+  mlraise(vres);
 }
 
-value z_stream_new(void) {
+static value z_stream_new(void) {
   value res = alloc((sizeof(z_stream) + sizeof(value) - 1) / sizeof(value),
                     Abstract_tag);
 
@@ -91,41 +94,58 @@ static int level_table[] = {
 };
 
 CAMLprim value mlzlib_deflateInit(value vlevel) {
-  value vz = z_stream_new();
-  int ret = deflateInit(Z_Val(vz), level_table[Int_val(vlevel)]);
+  CAMLparam1(vlevel);
+  CAMLlocal1(vz);
+  int ret;
+
+  vz = z_stream_new();
+  ret = deflateInit(Z_Val(vz), level_table[Int_val(vlevel)]);
   if (ret != Z_OK)
     mlzlib_error("deflateInit", ret, Z_Val(vz)->msg);
-  return vz;
+  CAMLreturn(vz);
 }
 
 CAMLprim value mlzlib_inflateInit(value unit) {
-  value vz = z_stream_new();
-  int ret = inflateInit(Z_Val(vz));
+  CAMLparam0();
+  CAMLlocal1(vz);
+  int ret;
+
+  vz = z_stream_new();
+  ret = inflateInit(Z_Val(vz));
   if (ret != Z_OK)
     mlzlib_error("inflateInit", ret, Z_Val(vz)->msg);
-  return vz;
+  CAMLreturn(vz);
 }
 
 CAMLprim value mlzlib_inflateInit2(value wbits) {
-  value vz = z_stream_new();
+  CAMLparam1(wbits);
+  CAMLlocal1(vz);
+
+  vz = z_stream_new();
   int ret = inflateInit2(Z_Val(vz), Int_val(wbits));
   if (ret != Z_OK)
     mlzlib_error("inflateInit", ret, Z_Val(vz)->msg);
-  return vz;
+  CAMLreturn(vz);
 }
 
 CAMLprim value mlzlib_deflateEnd(value vz) {
-  int ret = deflateEnd(Z_Val(vz));
+  CAMLparam1(vz);
+  int ret;
+
+  ret = deflateEnd(Z_Val(vz));
   if (ret != Z_OK)
     mlzlib_error("deflateEnd", ret, Z_Val(vz)->msg);
-  return Val_unit;
+  CAMLreturn0;
 }
 
 CAMLprim value mlzlib_inflateEnd(value vz) {
-  int ret = inflateEnd(Z_Val(vz));
+  CAMLparam1(vz);
+  int ret;
+
+  ret = inflateEnd(Z_Val(vz));
   if (ret != Z_OK)
     mlzlib_error("inflateEnd", ret, Z_Val(vz)->msg);
-  return Val_unit;
+  CAMLreturn0;
 }
 
 static int flush_table[] = {
@@ -204,25 +224,32 @@ CAMLprim value mlzlib_deflate_nc(value vz, value vflush,
 }
 
 CAMLprim value mlzlib_deflate_bc(value *arg, int nargs) {
-  return mlzlib_deflate_nc(arg[0], arg[1], arg[2], arg[3],
+  CAMLlocal1(vres);
+
+  vres = mlzlib_deflate_nc(arg[0], arg[1], arg[2], arg[3],
 			   arg[4], arg[5], arg[6], arg[7]);
+  CANLretyrn(vres);
 }
 
 CAMLprim value mlzlib_zlibVersion(value unit) {
-  value ret;
+  CAMLparam0();
+  CAMLlocal1(vres);
   const char *v = zlibVersion();
 
   if(v == NULL)
-    failwith("zlibVersion returns null pointer");
+    v = "";
 
-  ret = caml_copy_string(v);
-  return ret;
+  vres = caml_copy_string(v);
+  CAMLreturn(vres);
 }
 
 CAMLprim value mlzlib_crc32(value vcrc, value vbuf, value vlen) {
+  CAMLparam3(vcrc, vbuf, vlen);
+  CAMLlocal1(vres);
   unsigned long ret;
   ret = crc32(Int32_val(vcrc), &Byte_u(vbuf, 0), Long_val(vlen));
-  return copy_int32(ret);
+  vres = copy_int32(ret);
+  CAMLreturn(vres);
 }
 
 /*

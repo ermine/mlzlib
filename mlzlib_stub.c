@@ -194,11 +194,11 @@ CAMLprim value mlzlib_deflate_nc(value vz, value vflush,
 				 value vsrc_buf, value vsrc_pos, value vsrc_len,
 				 value vdst_buf, value vdst_pos, value vdst_len)
 {
+  value vres;
   z_stream *z = Z_Val(vz);
   int used_in;
   int used_out;
   int ret;
-  value res;
 
   z->next_in = &Byte_u(vsrc_buf, Long_val(vsrc_pos));
   z->avail_in = Long_val(vsrc_len);
@@ -216,19 +216,16 @@ CAMLprim value mlzlib_deflate_nc(value vz, value vflush,
   z->next_in = Z_NULL;
   z->next_out = Z_NULL;
 
-  res = alloc_small(3, 0);
-  Field(res, 0) = Val_bool(ret == Z_STREAM_END);
-  Field(res, 1) = Val_int(used_in);
-  Field(res, 2) = Val_int(used_out);
-  return res;
+  vres = alloc_small(3, 0);
+  Store_field(vres, 0, Val_bool(ret == Z_STREAM_END));
+  Store_field(vres, 1, Val_int(used_in));
+  Store_field(vres, 2, Val_int(used_out));
+  return vres;
 }
 
 CAMLprim value mlzlib_deflate_bc(value *arg, int nargs) {
-  CAMLlocal1(vres);
-
-  vres = mlzlib_deflate_nc(arg[0], arg[1], arg[2], arg[3],
+  return mlzlib_deflate_nc(arg[0], arg[1], arg[2], arg[3],
 			   arg[4], arg[5], arg[6], arg[7]);
-  CANLretyrn(vres);
 }
 
 CAMLprim value mlzlib_zlibVersion(value unit) {

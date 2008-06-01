@@ -1,6 +1,4 @@
-.PHONY: makelib testlib install clean
-
-.SUBDIRS: tests
+.PHONY: makelib testlib testlib install clean
 
 OCAMLFLAGS = -g
 
@@ -20,8 +18,6 @@ section
    $(OCAMLLIBS): $(CCLIB)
    .DEFAULT: $(LIB)$(EXT_LIB)
 
-open ../../config
-
 IFILES[] =
    mlzlib
 
@@ -30,6 +26,8 @@ ALIBS[] = $(CLIBNAME)$(EXT_LIB)
 LibInstall(makelib, $(LIB), $(IFILES), $(ALIBS))
 
 install: makelib
+
+.SUBDIRS: tests
 
 clean:
    $(CLEAN)

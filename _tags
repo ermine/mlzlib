@@ -1,0 +1,6 @@
+<*.c>: include_zlib_clib
+"libmlzlib.a": use_zlib_clib
+<mlzlib.cm{x,}a>: use_zlib_clib, use_libmlzlib
+<tests/gunzip_s.{byte,native}>: use_mlzlib, use_unix
+<tests/zpipe.{byte,native}>: use_mlzlib, use_unix
+
